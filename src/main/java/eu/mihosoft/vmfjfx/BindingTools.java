@@ -307,10 +307,17 @@ public final class BindingTools {
         }
     }
 
-    public final static class DoubleToStringBindingVMF2JFX implements BiFunction<eu.mihosoft.vmf.runtime.core.Property, Property<String>, String> {
+    /**
+     * Double to string converter (vmf -> jfx).
+     */
+    public final static class DoubleToStringConverterVMF2JFX implements BiFunction<eu.mihosoft.vmf.runtime.core.Property, Property<String>, String> {
         private final int numDigits;
 
-        public DoubleToStringBindingVMF2JFX(int numDigits) {
+        /**
+         * Constructor.
+         * @param numDigits number of digits to show after the separator dot.
+         */
+        public DoubleToStringConverterVMF2JFX(int numDigits) {
             this.numDigits = numDigits;
         }
 
@@ -320,11 +327,36 @@ public final class BindingTools {
         }
     }
 
-    public static class StringToDoubleBindingVMF2JFX implements BiFunction<javafx.beans.property.Property<String>, eu.mihosoft.vmf.runtime.core.Property, Object> {
+    /**
+     * String to double converter (jfx -> vmf).
+     */
+    public static class StringToDoubleConverterVMF2JFX implements BiFunction<javafx.beans.property.Property<String>, eu.mihosoft.vmf.runtime.core.Property, Object> {
 
         @Override
         public Double apply(javafx.beans.property.Property<String> propertyJFX, eu.mihosoft.vmf.runtime.core.Property propertyVMF) {
             return Double.parseDouble(propertyJFX.getValue());
+        }
+    }
+
+    /**
+     * Integer to String converter (vmf -> jfx).
+     */
+    public final static class IntegerToStringConverterVMF2JFX implements BiFunction<eu.mihosoft.vmf.runtime.core.Property/*<int>*/, Property<String>, String> {
+
+        @Override
+        public String apply(eu.mihosoft.vmf.runtime.core.Property property, Property<String> stringProperty) {
+            return String.format("%d", property.get());
+        }
+    }
+
+    /**
+     * String to Integer converter (jfx -> vmf).
+     */
+    public static class StringToIntegerConverterJFX2VMF implements BiFunction<javafx.beans.property.Property<String>, eu.mihosoft.vmf.runtime.core.Property/*<int>*/, Object> {
+
+        @Override
+        public Integer apply(javafx.beans.property.Property<String> propertyJFX, eu.mihosoft.vmf.runtime.core.Property propertyVMF) {
+            return Integer.parseInt(propertyJFX.getValue());
         }
     }
 

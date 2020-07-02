@@ -1,0 +1,62 @@
+import java.text.SimpleDateFormat
+
+// enable intellij integration & load vmf version to be used
+buildscript {
+
+    ext.commonProps = new Properties()
+    file(new File(project.projectDir,"config/common.properties")).withInputStream { commonProps.load(it) }
+
+    ext.vmfPluginIntelliJIntegration = true
+
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath "eu.mihosoft.vmf:vmf-gradle-plugin:${project.commonProps.get('vmf.version')}"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'com.github.hierynomus.license' version '0.14.0'
+    id 'maven-publish'
+    id 'net.nemerosa.versioning' version '2.7.1'
+    id 'com.jfrog.bintray' version '1.8.4'
+    id 'com.github.ben-manes.versions' version '0.13.0'
+
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+}
+
+javafx {
+    version = "14"
+    modules = [ 'javafx.graphics']
+}
+
+dependencies {
+
+}
+
+// load plugins
+apply plugin: 'eu.mihosoft.vmf'
+
+manifest {
+    attributes('Automatic-Module-Name': 'eu.mihosoft.vmfjfx')
+}
+
+license {
+    header = rootProject.file('config/HEADER')
+    strictCheck = true
+    ignoreFailures = true
+    mapping {
+        java   = 'SLASHSTAR_STYLE'
+        groovy = 'SLASHSTAR_STYLE'
+        fxml   = 'XML_STYLE'
+    }
+
+    ext.yearCurrent  = new SimpleDateFormat("yyyy").format(new Date())
+    ext.yearSince1   = '2019'
+    ext.author1 = 'Michael Hoffer <info@michaelhoffer.de>'
+
+    exclude '**/*.svg'
+}

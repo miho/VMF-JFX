@@ -22,6 +22,7 @@
  */
 package eu.mihosoft.vmfjfx;
 
+
 import eu.mihosoft.vmf.runtime.core.ChangeListener;
 import eu.mihosoft.vmf.runtime.core.VObject;
 import javafx.beans.InvalidationListener;
@@ -33,6 +34,7 @@ import vjavax.observer.Subscription;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -98,7 +100,7 @@ public final class BindingTools {
 
         private final PropBinderUntyped parent;
         private final BiFunction<eu.mihosoft.vmf.runtime.core.Property/*T*/, Property<R>, R> converter;
-        private BiConsumer<eu.mihosoft.vmf.runtime.core.Property/*T*/,Exception> onError;
+        private TriConsumer<eu.mihosoft.vmf.runtime.core.Property/*T*/,Property<R>, Exception> onError;
         private Property<R> prop;
 
         private PropBinder(PropBinderUntyped parent, BiFunction<eu.mihosoft.vmf.runtime.core.Property/*T*/, Property<R>, R> converter) {
@@ -111,7 +113,7 @@ public final class BindingTools {
          * @param onError consumer to execute on conversion error
          * @return this property binder
          */
-        PropBinder<T,R> withErrorHandler(BiConsumer<eu.mihosoft.vmf.runtime.core.Property/*T*/,Exception> onError) {
+        PropBinder<T,R> withErrorHandler(TriConsumer<eu.mihosoft.vmf.runtime.core.Property/*T*/,Property<R>, Exception> onError) {
             this.onError = onError;
             return this;
         }
@@ -136,9 +138,9 @@ public final class BindingTools {
     public final static class FXBinder<T,R> {
 
         private final PropBinder<T,R> propBinder;
-        private BiConsumer<Property<R>,Exception> onError;
+        private TriConsumer<Property<R>,eu.mihosoft.vmf.runtime.core.Property/*T*/, Exception> onError;
         private Node backSyncNode;
-        private BiFunction<Property<R>, eu.mihosoft.vmf.runtime.core.Property, T> backSyncConverter;
+        private BiFunction<Property<R>, eu.mihosoft.vmf.runtime.core.Property/*T*/, T> backSyncConverter;
         private Predicate<R> backSyncPred;
 
         private FXBinder(PropBinder<T,R> propBinder) {
@@ -150,7 +152,7 @@ public final class BindingTools {
          * @param onError consumer to execute on conversion error
          * @return this property binder
          */
-        FXBinder<T,R> withErrorHandler(BiConsumer<Property<R>,Exception> onError) {
+        FXBinder<T,R> withErrorHandler(TriConsumer<Property<R>,eu.mihosoft.vmf.runtime.core.Property/*T*/, Exception> onError) {
             this.onError = onError;
             return this;
         }
@@ -234,7 +236,7 @@ public final class BindingTools {
                     fxProp.setValue(vmfToFX.apply(vmfProp, fxProp));
                 } catch (Exception ex) {
                     if(onError!=null) {
-                        onError.accept(vmfProp, ex);
+                        onError.accept(vmfProp, fxProp, ex);
                     } else {
                         throw new RuntimeException("binding broken",ex);
                     }
@@ -269,7 +271,7 @@ public final class BindingTools {
                     }
                 } catch (Exception ex) {
                     if (onError != null) {
-                        onError.accept(fxProp, ex);
+                        onError.accept(fxProp, vmfProp, ex);
                     } else {
                         throw new RuntimeException("binding broken", ex);
                     }
@@ -326,7 +328,55 @@ public final class BindingTools {
         }
     }
 
+    /**
+     * Represents an operation that accepts three input arguments and returns no
+     * result. This is the tertiary specialization of {@link java.util.function.Consumer}.
+     * Unlike most other functional interfaces, {@code TriConsumer} is expected
+     * to operate via side-effects.
+     * <p>
+     * <p>This is a <a href="package-summary.html">functional interface</a>
+     * whose functional method is {@link #accept(Object, Object, Object)}.
+     *
+     * @param <S> the type of the first argument to the operation
+     * @param <T> the type of the second argument to the operation
+     * @param <U> the type of the third argument to the operation
+     * @see {@link java.util.function.Consumer}, {@link BiConsumer}
+     */
+    @FunctionalInterface
+    public interface TriConsumer<S,T,U> {
+
+        /**
+         * Performs this operation on the given arguments.
+         *
+         * @param s the first input argument
+         * @param t the second input argument
+         * @param u the third input argument
+         */
+        void accept(S s,T t,U u);
+
+        /**
+         * Returns a composed {@code TriConsumer} that performs, in sequence, this
+         * operation followed by the {@code after} operation. If performing either
+         * operation throws an exception, it is relayed to the caller of the
+         * composed operation.  If performing this operation throws an exception,
+         * the {@code after} operation will not be performed.
+         *
+         * @param after the operation to perform after this operation
+         * @return a composed {@code TriConsumer} that performs in sequence this
+         * operation followed by the {@code after} operation
+         * @throws NullPointerException if {@code after} is null
+         */
+        default TriConsumer<S, T, U> andThen(TriConsumer<? super S, ? super T, ? super U> after) {
+            Objects.requireNonNull(after);
+
+            return (l, r, s) -> {
+                accept(l, r, s);
+                after.accept(l, r, s);
+            };
+        }
+    }
 }
+
 
 
 
